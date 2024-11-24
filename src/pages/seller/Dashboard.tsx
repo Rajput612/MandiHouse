@@ -112,12 +112,65 @@ export default function SellerDashboard() {
   const { user, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const [timeRange, setTimeRange] = useState<'today' | 'week' | 'month'>('today');
+  
+  // Pagination states
+  const [ordersPage, setOrdersPage] = useState(1);
+  const [inventoryPage, setInventoryPage] = useState(1);
+  const ITEMS_PER_PAGE = 5;
 
   React.useEffect(() => {
     if (!isAuthenticated || user?.userType !== 'seller') {
       navigate('/');
     }
   }, [isAuthenticated, user, navigate]);
+
+  // Pagination calculations
+  const totalOrderPages = Math.ceil(recentOrders.length / ITEMS_PER_PAGE);
+  const totalInventoryPages = Math.ceil(productInventory.length / ITEMS_PER_PAGE);
+
+  // Get paginated data
+  const getPaginatedData = (data: any[], page: number) => {
+    const startIndex = (page - 1) * ITEMS_PER_PAGE;
+    const endIndex = startIndex + ITEMS_PER_PAGE;
+    return data.slice(startIndex, endIndex);
+  };
+
+  const paginatedOrders = getPaginatedData(recentOrders, ordersPage);
+  const paginatedInventory = getPaginatedData(productInventory, inventoryPage);
+
+  const PaginationControls = ({ currentPage, totalPages, onPageChange }: { 
+    currentPage: number; 
+    totalPages: number; 
+    onPageChange: (page: number) => void; 
+  }) => (
+    <div className="px-6 py-3 flex justify-between items-center border-t border-gray-200">
+      <button
+        onClick={() => onPageChange(currentPage - 1)}
+        disabled={currentPage === 1}
+        className={`px-3 py-1 rounded ${
+          currentPage === 1 
+            ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+            : 'bg-green-500 text-white hover:bg-green-600'
+        }`}
+      >
+        Previous
+      </button>
+      <span className="text-sm text-gray-600">
+        Page {currentPage} of {totalPages}
+      </span>
+      <button
+        onClick={() => onPageChange(currentPage + 1)}
+        disabled={currentPage === totalPages}
+        className={`px-3 py-1 rounded ${
+          currentPage === totalPages 
+            ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+            : 'bg-green-500 text-white hover:bg-green-600'
+        }`}
+      >
+        Next
+      </button>
+    </div>
+  );
 
   const stats = [
     { 
@@ -198,7 +251,7 @@ export default function SellerDashboard() {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {recentOrders.map((order) => (
+                  {paginatedOrders.map((order) => (
                     <tr key={order.id}>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">#{order.id}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{order.customer}</td>
@@ -219,6 +272,11 @@ export default function SellerDashboard() {
                   ))}
                 </tbody>
               </table>
+              <PaginationControls
+                currentPage={ordersPage}
+                totalPages={totalOrderPages}
+                onPageChange={setOrdersPage}
+              />
             </div>
           </div>
 
@@ -243,7 +301,7 @@ export default function SellerDashboard() {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {productInventory.map((product) => (
+                  {paginatedInventory.map((product) => (
                     <tr key={product.id}>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{product.name}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -262,6 +320,11 @@ export default function SellerDashboard() {
                   ))}
                 </tbody>
               </table>
+              <PaginationControls
+                currentPage={inventoryPage}
+                totalPages={totalInventoryPages}
+                onPageChange={setInventoryPage}
+              />
             </div>
           </div>
         </div>
