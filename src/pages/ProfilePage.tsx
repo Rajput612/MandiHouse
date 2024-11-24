@@ -151,17 +151,17 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12">
+    <div className="min-h-screen bg-gray-50 py-6 sm:py-8 md:py-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="max-w-3xl mx-auto">
-          <h1 className="text-3xl font-bold text-gray-900 mb-8">Profile Settings</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6 sm:mb-8">Profile Settings</h1>
           
           <div className="bg-white shadow rounded-lg">
-            <form onSubmit={handleSubmit} className="p-6 space-y-6">
+            <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4 sm:space-y-6">
               {/* Personal Information */}
-              <div className="border-b border-gray-200 pb-6">
-                <h2 className="text-xl font-semibold text-gray-900 mb-4">Personal Information</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="border-b border-gray-200 pb-4 sm:pb-6">
+                <h2 className="text-lg sm:text-xl font-semibold text-gray-900 mb-3 sm:mb-4">Personal Information</h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   <div>
                     <label htmlFor="firstName" className="block text-sm font-medium text-gray-700">
                       First Name
@@ -208,7 +208,7 @@ export default function ProfilePage() {
 
                 {/* Additional fields for sellers */}
                 {user?.userType === 'seller' && (
-                  <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                     <div>
                       <label htmlFor="panNumber" className="block text-sm font-medium text-gray-700">
                         PAN Number
@@ -256,9 +256,9 @@ export default function ProfilePage() {
               </div>
 
               {/* Address Information */}
-              <div className="border-b border-gray-200 pb-6">
-                <h2 className="text-xl font-semibold text-gray-900 mb-4">Address</h2>
-                <div className="space-y-4">
+              <div className="border-b border-gray-200 pb-4 sm:pb-6">
+                <h2 className="text-lg sm:text-xl font-semibold text-gray-900 mb-3 sm:mb-4">Address</h2>
+                <div className="space-y-3 sm:space-y-4">
                   <div>
                     <label htmlFor="addressLine1" className="block text-sm font-medium text-gray-700">
                       Address Line 1
@@ -299,7 +299,7 @@ export default function ProfilePage() {
                       className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-green-500 focus:border-green-500"
                     />
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                     <div>
                       <label htmlFor="district" className="block text-sm font-medium text-gray-700">
                         District
@@ -336,29 +336,29 @@ export default function ProfilePage() {
 
               {/* Map Section */}
               <div>
-                <h2 className="text-xl font-semibold text-gray-900 mb-4">Location on Map</h2>
+                <h2 className="text-lg sm:text-xl font-semibold text-gray-900 mb-3 sm:mb-4">Location on Map</h2>
                 <input
                   id="location-search"
                   type="text"
                   placeholder="Search for a location"
-                  className="w-full mb-4 p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"
+                  className="w-full mb-3 sm:mb-4 p-2 sm:p-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"
                 />
                 <div 
                   id="map" 
-                  className="w-full h-96 rounded-lg border border-gray-300 mb-4"
+                  className="w-full h-64 sm:h-96 rounded-lg border border-gray-300 mb-3 sm:mb-4"
                 ></div>
                 {formData.latitude && formData.longitude && (
-                  <p className="text-sm text-gray-600">
+                  <p className="text-xs sm:text-sm text-gray-600">
                     Selected location: {formData.latitude.toFixed(6)}, {formData.longitude.toFixed(6)}
                   </p>
                 )}
               </div>
 
               {/* Submit Button */}
-              <div className="flex justify-end">
+              <div className="flex justify-center sm:justify-end pt-4">
                 <button
                   type="submit"
-                  className="bg-green-500 text-white px-6 py-2 rounded-md hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                  className="w-full sm:w-auto bg-green-500 text-white px-6 py-2.5 rounded-md hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 text-sm sm:text-base font-medium transition-colors duration-200"
                 >
                   Save Changes
                 </button>

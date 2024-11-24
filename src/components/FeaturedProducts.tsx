@@ -41,16 +41,16 @@ const products = [
 
 export default function FeaturedProducts() {
   return (
-    <section className="py-12" id="featured">
-      <div className="max-w-7xl mx-auto px-4">
-        <h2 className="text-xl font-semibold text-gray-800 mb-8">Featured Products</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <section className="py-8 sm:py-12" id="featured">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <h2 className="text-lg sm:text-xl font-semibold text-gray-800 mb-6 sm:mb-8">Featured Products</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
           {products.map((product, index) => (
-            <div key={index} className="bg-green-400 p-8 rounded-lg text-center">
+            <div key={index} className="bg-green-400 p-6 sm:p-8 rounded-lg text-center hover:bg-green-500 transition-colors duration-300">
               {product.icon}
-              <h3 className="text-lg font-semibold text-white mb-2">{product.title}</h3>
-              <p className="text-white/90 text-sm mb-4">{product.description}</p>
-              <p className="text-white font-medium">Starting from {product.price}</p>
+              <h3 className="text-base sm:text-lg font-semibold text-white mb-1 sm:mb-2">{product.title}</h3>
+              <p className="text-white/90 text-sm mb-3 sm:mb-4">{product.description}</p>
+              <p className="text-white font-medium text-sm sm:text-base">Starting from {product.price}</p>
             </div>
           ))}
         </div>

@@ -49,19 +49,19 @@ export default function Categories() {
   return (
     <>
       {/* Featured Categories Section */}
-      <section className="py-12 bg-gray-50" id="featured">
-        <div className="max-w-7xl mx-auto px-4">
-          <h2 className="text-xl font-semibold text-gray-800 mb-8">Featured Categories</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <section className="py-8 sm:py-12 bg-gray-50" id="featured">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <h2 className="text-lg sm:text-xl font-semibold text-gray-800 mb-6 sm:mb-8">Featured Categories</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
             {featuredCategories.map((category, index) => (
               <div 
                 key={index} 
-                className="bg-green-500 p-6 rounded-lg text-center hover:bg-green-600 transition-all duration-300 cursor-pointer shadow-sm hover:shadow-md"
+                className="bg-green-500 p-4 sm:p-6 rounded-lg text-center hover:bg-green-600 transition-all duration-300 cursor-pointer shadow-sm hover:shadow-md"
               >
-                <i className="text-white text-4xl mb-4 block">
+                <i className="text-white text-3xl sm:text-4xl mb-3 sm:mb-4 block">
                   <i className={category.iconClass}></i>
                 </i>
-                <h3 className="text-white text-lg font-semibold mb-2">{category.name}</h3>
+                <h3 className="text-white text-base sm:text-lg font-semibold mb-1 sm:mb-2">{category.name}</h3>
                 <p className="text-green-50 text-sm">{category.description}</p>
               </div>
             ))}
@@ -70,17 +70,17 @@ export default function Categories() {
       </section>
 
       {/* Browse Categories Section */}
-      <section className="py-12 bg-white" id="categories">
-        <div className="max-w-7xl mx-auto px-4">
-          <h2 className="text-xl font-semibold text-gray-800 mb-8">Browse Categories</h2>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+      <section className="py-8 sm:py-12 bg-white" id="categories">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <h2 className="text-lg sm:text-xl font-semibold text-gray-800 mb-6 sm:mb-8">Browse Categories</h2>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
             {categories.map((category, index) => (
               <div 
                 key={index} 
-                className="bg-white p-6 rounded-lg text-center hover:bg-gray-50 transition-all duration-300 cursor-pointer shadow-sm hover:shadow-md border border-gray-100"
+                className="bg-white p-3 sm:p-4 md:p-6 rounded-lg text-center hover:bg-gray-50 transition-all duration-300 cursor-pointer shadow-sm hover:shadow-md border border-gray-100"
               >
-                <i className={`${category.iconClass} text-3xl mb-3 text-green-500`}></i>
-                <p className="text-gray-600 font-medium">
+                <i className={`${category.iconClass} text-2xl sm:text-3xl mb-2 sm:mb-3 text-green-500`}></i>
+                <p className="text-gray-600 font-medium text-sm sm:text-base">
                   {category.name}
                 </p>
               </div>
