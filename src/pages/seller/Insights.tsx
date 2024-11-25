@@ -95,6 +95,42 @@ export default function Insights() {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedSubcategory, setSelectedSubcategory] = useState<string>('all');
   const [selectedProduct, setSelectedProduct] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [filters, setFilters] = useState({
+    productName: '',
+    sales: '',
+    revenue: '',
+    stockLevel: ''
+  });
+  const [sortConfig, setSortConfig] = useState<{
+    key: 'productName' | 'sales' | 'revenue' | 'stockLevel';
+    direction: 'asc' | 'desc';
+  } | null>(null);
+
+  const handleSort = (key: 'productName' | 'sales' | 'revenue' | 'stockLevel') => {
+    let direction: 'asc' | 'desc' = 'asc';
+    if (sortConfig && sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const getSortIcon = (key: 'productName' | 'sales' | 'revenue' | 'stockLevel') => {
+    if (!sortConfig || sortConfig.key !== key) {
+      return <i className="fas fa-sort text-gray-400 ml-1"></i>;
+    }
+    return sortConfig.direction === 'asc' 
+      ? <i className="fas fa-sort-up text-green-500 ml-1"></i>
+      : <i className="fas fa-sort-down text-green-500 ml-1"></i>;
+  };
+
+  const handleFilterChange = (key: string, value: string) => {
+    setFilters(prev => ({
+      ...prev,
+      [key]: value
+    }));
+  };
+
   const [metrics, setMetrics] = useState<InsightMetrics>({
     highDemandProducts: [],
     salesByTimeframe: [],
@@ -102,37 +138,29 @@ export default function Insights() {
     productPerformance: []
   });
 
-  // Generate sample data based on time range
-  const generateTimeData = (range: TimeRange) => {
-    switch (range) {
-      case 'Day':
-        return Array.from({ length: 24 }, (_, i) => ({
-          date: `${i}:00`,
-          sales: Math.floor(Math.random() * 50) + 10,
-          revenue: (Math.floor(Math.random() * 50) + 10) * 100
-        }));
-      case 'Week':
-        return ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(day => ({
-          date: day,
-          sales: Math.floor(Math.random() * 300) + 100,
-          revenue: (Math.floor(Math.random() * 300) + 100) * 100
-        }));
-      case 'Month':
-        return Array.from({ length: 30 }, (_, i) => ({
-          date: `Day ${i + 1}`,
-          sales: Math.floor(Math.random() * 500) + 200,
-          revenue: (Math.floor(Math.random() * 500) + 200) * 100
-        }));
-      case 'Year':
-        return ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'].map(month => ({
-          date: month,
-          sales: Math.floor(Math.random() * 1000) + 500,
-          revenue: (Math.floor(Math.random() * 1000) + 500) * 100
-        }));
-      default:
-        return [];
+  const filteredAndSortedProducts = useMemo(() => {
+    let filteredItems = metrics.productPerformance.filter(product => {
+      return (
+        product.productName.toLowerCase().includes(filters.productName.toLowerCase()) &&
+        product.sales.toString().includes(filters.sales) &&
+        product.revenue.toString().includes(filters.revenue) &&
+        product.stockLevel.toString().includes(filters.stockLevel)
+      );
+    });
+
+    if (sortConfig) {
+      filteredItems.sort((a, b) => {
+        if (a[sortConfig.key] < b[sortConfig.key]) {
+          return sortConfig.direction === 'asc' ? -1 : 1;
+        }
+        if (a[sortConfig.key] > b[sortConfig.key]) {
+          return sortConfig.direction === 'asc' ? 1 : -1;
+        }
+        return 0;
+      });
     }
-  };
+    return filteredItems;
+  }, [metrics.productPerformance, filters, sortConfig]);
 
   useEffect(() => {
     const fetchInsightData = () => {
@@ -183,6 +211,38 @@ export default function Insights() {
 
     fetchInsightData();
   }, [timeRange, selectedCategory, selectedSubcategory, selectedProduct]);
+
+  // Generate sample data based on time range
+  const generateTimeData = (range: TimeRange) => {
+    switch (range) {
+      case 'Day':
+        return Array.from({ length: 24 }, (_, i) => ({
+          date: `${i}:00`,
+          sales: Math.floor(Math.random() * 50) + 10,
+          revenue: (Math.floor(Math.random() * 50) + 10) * 100
+        }));
+      case 'Week':
+        return ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(day => ({
+          date: day,
+          sales: Math.floor(Math.random() * 300) + 100,
+          revenue: (Math.floor(Math.random() * 300) + 100) * 100
+        }));
+      case 'Month':
+        return Array.from({ length: 30 }, (_, i) => ({
+          date: `Day ${i + 1}`,
+          sales: Math.floor(Math.random() * 500) + 200,
+          revenue: (Math.floor(Math.random() * 500) + 200) * 100
+        }));
+      case 'Year':
+        return ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'].map(month => ({
+          date: month,
+          sales: Math.floor(Math.random() * 1000) + 500,
+          revenue: (Math.floor(Math.random() * 1000) + 500) * 100
+        }));
+      default:
+        return [];
+    }
+  };
 
   // Get available categories
   const categories = ['all', ...Object.keys(CATEGORIES_WITH_SUBCATEGORIES)];
@@ -365,22 +425,79 @@ export default function Insights() {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50 sticky top-0">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Product
+                  {/* Column Headers */}
+                  <th className="px-6 py-3">
+                    <div className="flex flex-col space-y-2">
+                      <div 
+                        className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 flex items-center"
+                        onClick={() => handleSort('productName')}
+                      >
+                        Product {getSortIcon('productName')}
+                      </div>
+                      <input
+                        type="text"
+                        placeholder="Filter products..."
+                        value={filters.productName}
+                        onChange={(e) => handleFilterChange('productName', e.target.value)}
+                        className="px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-green-500"
+                      />
+                    </div>
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Sales
+                  <th className="px-6 py-3">
+                    <div className="flex flex-col space-y-2">
+                      <div 
+                        className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 flex items-center"
+                        onClick={() => handleSort('sales')}
+                      >
+                        Sales {getSortIcon('sales')}
+                      </div>
+                      <input
+                        type="text"
+                        placeholder="Filter sales..."
+                        value={filters.sales}
+                        onChange={(e) => handleFilterChange('sales', e.target.value)}
+                        className="px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-green-500"
+                      />
+                    </div>
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Revenue
+                  <th className="px-6 py-3">
+                    <div className="flex flex-col space-y-2">
+                      <div 
+                        className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 flex items-center"
+                        onClick={() => handleSort('revenue')}
+                      >
+                        Revenue {getSortIcon('revenue')}
+                      </div>
+                      <input
+                        type="text"
+                        placeholder="Filter revenue..."
+                        value={filters.revenue}
+                        onChange={(e) => handleFilterChange('revenue', e.target.value)}
+                        className="px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-green-500"
+                      />
+                    </div>
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Stock Level
+                  <th className="px-6 py-3">
+                    <div className="flex flex-col space-y-2">
+                      <div 
+                        className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 flex items-center"
+                        onClick={() => handleSort('stockLevel')}
+                      >
+                        Stock Level {getSortIcon('stockLevel')}
+                      </div>
+                      <input
+                        type="text"
+                        placeholder="Filter stock..."
+                        value={filters.stockLevel}
+                        onChange={(e) => handleFilterChange('stockLevel', e.target.value)}
+                        className="px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-green-500"
+                      />
+                    </div>
                   </th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {metrics.productPerformance.map((product, index) => (
+                {filteredAndSortedProducts.map((product, index) => (
                   <tr key={index}>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                       {product.productName}

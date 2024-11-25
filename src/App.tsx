@@ -14,6 +14,9 @@ import BuyerOrders from './pages/buyer/Orders';
 import ProductListingPage from './pages/ProductListingPage';
 import Insights from './pages/seller/Insights';
 import AdvancedInsights from './pages/seller/AdvancedInsights';
+import Orders from './pages/seller/Orders';
+import OrderDetail from './pages/seller/OrderDetail';
+import SellerInventory from './pages/seller/Inventory';
 import { AuthProvider } from './context/AuthContext';
 import { ProductsPage } from './pages/ProductsPage';
 import AdminLogin from './pages/AdminLogin';
@@ -24,7 +27,7 @@ import ProductCatalog from './pages/admin/ProductCatalog';
 import MiddlemanPortal from './pages/admin/MiddlemanPortal';
 import Analytics from './pages/admin/Analytics';
 import SystemSettings from './pages/admin/SystemSettings';
-import Inventory from './pages/admin/Inventory';
+import AdminInventory from './pages/admin/Inventory';
 import QualityControl from './pages/admin/QualityControl';
 import FinancialReports from './pages/admin/FinancialReports';
 import OverviewDashboard from './pages/middleman/OverviewDashboard';
@@ -66,7 +69,7 @@ const App: React.FC = () => {
               
               {/* Protected Routes */}
               <Route path="/profile" element={<ProfilePage />} />
-                <Route path="/buyer/orders" element={<BuyerOrders />} />
+              <Route path="/buyer/orders" element={<BuyerOrders />} />
 
               {/* Admin Routes */}
               <Route path="/admin/login" element={<AdminLogin />} />
@@ -77,7 +80,7 @@ const App: React.FC = () => {
                 <Route path="middlemen" element={<MiddlemanPortal />} />
                 <Route path="finances" element={<FinancialReports />} />
                 <Route path="quality" element={<QualityControl />} />
-                <Route path="inventory" element={<Inventory />} />
+                <Route path="inventory" element={<AdminInventory />} />
                 <Route path="analytics" element={<Analytics />} />
                 <Route path="settings" element={<SystemSettings />} />
               </Route>
@@ -131,13 +134,16 @@ const App: React.FC = () => {
                 } />
               </Route>
               {/* Seller Routes */}
-            <Route path="/seller">
-              <Route index element={<SellerDashboard />} />
-              <Route path="dashboard" element={<SellerDashboard />} />
-              <Route path="insights" element={<Insights />} />
-              <Route path="advanced-insights" element={<AdvancedInsights />} />
-            </Route>
-          </Routes>
+              <Route path="/seller">
+                <Route index element={<SellerDashboard />} />
+                <Route path="dashboard" element={<SellerDashboard />} />
+                <Route path="insights" element={<Insights />} />
+                <Route path="advanced-insights" element={<AdvancedInsights />} />
+                <Route path="orders" element={<Orders />} />
+                <Route path="orders/:orderId" element={<OrderDetail />} />
+                <Route path="inventory" element={<SellerInventory />} />
+              </Route>
+            </Routes>
           </div>
         </AuthProvider>
       </AdminProvider>

@@ -90,6 +90,14 @@ export default function Dashboard() {
   const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
   const [productFilter, setProductFilter] = useState<FilterState>({ column: '', value: '' });
   const [orderFilter, setOrderFilter] = useState<FilterState>({ column: '', value: '' });
+  const [productSort, setProductSort] = useState<{
+    column: keyof Product | '';
+    direction: 'asc' | 'desc';
+  }>({ column: '', direction: 'asc' });
+  const [orderSort, setOrderSort] = useState<{
+    column: keyof Order | '';
+    direction: 'asc' | 'desc';
+  }>({ column: '', direction: 'asc' });
   const [isAddProductModalOpen, setIsAddProductModalOpen] = useState(false);
   const [newProduct, setNewProduct] = useState<NewProduct>(initialNewProduct);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -179,12 +187,68 @@ export default function Dashboard() {
     setFilteredOrders(filtered);
   }, [orderFilter, orders]);
 
+  useEffect(() => {
+    if (!productSort.column) {
+      setFilteredProducts(products);
+      return;
+    }
+
+    const sorted = products.sort((a, b) => {
+      if (productSort.direction === 'asc') {
+        return a[productSort.column] < b[productSort.column] ? -1 : 1;
+      } else {
+        return a[productSort.column] > b[productSort.column] ? -1 : 1;
+      }
+    });
+    setFilteredProducts(sorted);
+  }, [productSort, products]);
+
+  useEffect(() => {
+    if (!orderSort.column) {
+      setFilteredOrders(orders);
+      return;
+    }
+
+    const sorted = orders.sort((a, b) => {
+      if (orderSort.direction === 'asc') {
+        return a[orderSort.column] < b[orderSort.column] ? -1 : 1;
+      } else {
+        return a[orderSort.column] > b[orderSort.column] ? -1 : 1;
+      }
+    });
+    setFilteredOrders(sorted);
+  }, [orderSort, orders]);
+
   const handleColumnFilter = (column: string, value: string, type: 'product' | 'order') => {
     if (type === 'product') {
       setProductFilter({ column, value });
     } else {
       setOrderFilter({ column, value });
     }
+  };
+
+  const handleSort = (column: string, type: 'product' | 'order') => {
+    if (type === 'product') {
+      setProductSort(prev => ({
+        column: column as keyof Product,
+        direction: prev.column === column && prev.direction === 'asc' ? 'desc' : 'asc'
+      }));
+    } else {
+      setOrderSort(prev => ({
+        column: column as keyof Order,
+        direction: prev.column === column && prev.direction === 'asc' ? 'desc' : 'asc'
+      }));
+    }
+  };
+
+  const getSortIcon = (column: string, type: 'product' | 'order') => {
+    const sort = type === 'product' ? productSort : orderSort;
+    if (sort.column !== column) {
+      return <i className="fas fa-sort text-gray-400 ml-1"></i>;
+    }
+    return sort.direction === 'asc' 
+      ? <i className="fas fa-sort-up text-green-500 ml-1"></i>
+      : <i className="fas fa-sort-down text-green-500 ml-1"></i>;
   };
 
   const handleAddProduct = (e: React.FormEvent) => {
@@ -432,7 +496,13 @@ export default function Dashboard() {
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   <div className="flex flex-col">
-                    <span>Product</span>
+                    <div 
+                      className="flex items-center cursor-pointer hover:text-gray-700"
+                      onClick={() => handleSort('name', 'product')}
+                    >
+                      <span>Product</span>
+                      {getSortIcon('name', 'product')}
+                    </div>
                     <input
                       type="text"
                       placeholder="Filter product..."
@@ -443,7 +513,13 @@ export default function Dashboard() {
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   <div className="flex flex-col">
-                    <span>Price</span>
+                    <div 
+                      className="flex items-center cursor-pointer hover:text-gray-700"
+                      onClick={() => handleSort('price', 'product')}
+                    >
+                      <span>Price</span>
+                      {getSortIcon('price', 'product')}
+                    </div>
                     <input
                       type="text"
                       placeholder="Filter price..."
@@ -454,7 +530,13 @@ export default function Dashboard() {
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   <div className="flex flex-col">
-                    <span>Quantity</span>
+                    <div 
+                      className="flex items-center cursor-pointer hover:text-gray-700"
+                      onClick={() => handleSort('quantity', 'product')}
+                    >
+                      <span>Quantity</span>
+                      {getSortIcon('quantity', 'product')}
+                    </div>
                     <input
                       type="text"
                       placeholder="Filter quantity..."
@@ -465,7 +547,13 @@ export default function Dashboard() {
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   <div className="flex flex-col">
-                    <span>Category</span>
+                    <div 
+                      className="flex items-center cursor-pointer hover:text-gray-700"
+                      onClick={() => handleSort('category', 'product')}
+                    >
+                      <span>Category</span>
+                      {getSortIcon('category', 'product')}
+                    </div>
                     <input
                       type="text"
                       placeholder="Filter category..."
@@ -476,7 +564,13 @@ export default function Dashboard() {
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   <div className="flex flex-col">
-                    <span>Status</span>
+                    <div 
+                      className="flex items-center cursor-pointer hover:text-gray-700"
+                      onClick={() => handleSort('status', 'product')}
+                    >
+                      <span>Status</span>
+                      {getSortIcon('status', 'product')}
+                    </div>
                     <input
                       type="text"
                       placeholder="Filter status..."
@@ -550,7 +644,13 @@ export default function Dashboard() {
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   <div className="flex flex-col">
-                    <span>Order ID</span>
+                    <div 
+                      className="flex items-center cursor-pointer hover:text-gray-700"
+                      onClick={() => handleSort('id', 'order')}
+                    >
+                      <span>Order ID</span>
+                      {getSortIcon('id', 'order')}
+                    </div>
                     <input
                       type="text"
                       placeholder="Filter ID..."
@@ -561,7 +661,13 @@ export default function Dashboard() {
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   <div className="flex flex-col">
-                    <span>Customer</span>
+                    <div 
+                      className="flex items-center cursor-pointer hover:text-gray-700"
+                      onClick={() => handleSort('customerName', 'order')}
+                    >
+                      <span>Customer</span>
+                      {getSortIcon('customerName', 'order')}
+                    </div>
                     <input
                       type="text"
                       placeholder="Filter customer..."
@@ -572,7 +678,13 @@ export default function Dashboard() {
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   <div className="flex flex-col">
-                    <span>Items</span>
+                    <div 
+                      className="flex items-center cursor-pointer hover:text-gray-700"
+                      onClick={() => handleSort('items', 'order')}
+                    >
+                      <span>Items</span>
+                      {getSortIcon('items', 'order')}
+                    </div>
                     <input
                       type="text"
                       placeholder="Filter items..."
@@ -583,7 +695,13 @@ export default function Dashboard() {
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   <div className="flex flex-col">
-                    <span>Total</span>
+                    <div 
+                      className="flex items-center cursor-pointer hover:text-gray-700"
+                      onClick={() => handleSort('total', 'order')}
+                    >
+                      <span>Total</span>
+                      {getSortIcon('total', 'order')}
+                    </div>
                     <input
                       type="text"
                       placeholder="Filter total..."
@@ -594,7 +712,13 @@ export default function Dashboard() {
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   <div className="flex flex-col">
-                    <span>Status</span>
+                    <div 
+                      className="flex items-center cursor-pointer hover:text-gray-700"
+                      onClick={() => handleSort('status', 'order')}
+                    >
+                      <span>Status</span>
+                      {getSortIcon('status', 'order')}
+                    </div>
                     <input
                       type="text"
                       placeholder="Filter status..."
@@ -605,7 +729,13 @@ export default function Dashboard() {
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   <div className="flex flex-col">
-                    <span>Date</span>
+                    <div 
+                      className="flex items-center cursor-pointer hover:text-gray-700"
+                      onClick={() => handleSort('date', 'order')}
+                    >
+                      <span>Date</span>
+                      {getSortIcon('date', 'order')}
+                    </div>
                     <input
                       type="text"
                       placeholder="Filter date..."
@@ -628,11 +758,11 @@ export default function Dashboard() {
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm font-medium text-gray-900">{order.customerName}</div>
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-900">
                       {order.items.map((item, index) => (
-                        <div key={index}>
-                          {item.name} x {item.quantity}
+                        <div key={index} className="whitespace-nowrap">
+                          {item.name} × {item.quantity}
                         </div>
                       ))}
                     </div>
