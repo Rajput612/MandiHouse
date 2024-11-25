@@ -1,14 +1,5 @@
 import SessionManager from './sessionManager';
-
-interface Product {
-  id: string;
-  name: string;
-  stock: number;
-  price: number;
-  unit: string;
-  category: string;
-  lastUpdated: string;
-}
+import { Product } from '../types/Product';
 
 interface OrderItem {
   name: string;
@@ -27,6 +18,8 @@ interface Order {
   deliveryDate: string;
   paymentMethod: string;
   location: string;
+  buyerId: string;
+  sellerId: string;
 }
 
 class ProductManager {
@@ -34,248 +27,341 @@ class ProductManager {
   private static readonly ORDERS_KEY = 'mandi_house_orders';
   private static readonly ITEMS_PER_PAGE = 10;
 
-  // Get all products from session storage
+  // Basic product data for testing
+  private static readonly dummyProducts = [
+    {
+      id: 'PROD001',
+      name: 'Organic Tomatoes',
+      price: 40,
+      quantity: 100,
+      unit: 'kg',
+      category: 'Vegetables',
+      sellerId: 'SELL001',
+      image: 'https://example.com/tomato.jpg'
+    },
+    {
+      id: 'PROD002',
+      name: 'Fresh Carrots',
+      price: 35,
+      quantity: 150,
+      unit: 'kg',
+      category: 'Vegetables',
+      sellerId: 'SELL001',
+      image: 'https://example.com/carrot.jpg'
+    },
+    {
+      id: 'PROD003',
+      name: 'Green Peas',
+      price: 60,
+      quantity: 80,
+      unit: 'kg',
+      category: 'Vegetables',
+      sellerId: 'SELL003',
+      image: 'https://example.com/peas.jpg'
+    }
+  ];
+
+  // Basic order data for testing
+  private static readonly dummyOrders = [
+    {
+      id: 'ORD001',
+      items: [
+        {
+          name: 'Organic Tomatoes',
+          quantity: 5,
+          unit: 'kg',
+          price: 40
+        },
+        {
+          name: 'Fresh Carrots',
+          quantity: 3,
+          unit: 'kg',
+          price: 35
+        }
+      ],
+      total: 305,
+      status: 'Processing',
+      date: '2024-02-24',
+      deliveryDate: '2024-02-27',
+      seller: 'Farm Fresh Vegetables',
+      location: 'Sector 62, Noida',
+      paymentMethod: 'UPI',
+      buyerId: 'BUY001',
+      sellerId: 'SELL001'
+    },
+    {
+      id: 'ORD002',
+      items: [
+        {
+          name: 'Fresh Potatoes',
+          quantity: 10,
+          unit: 'kg',
+          price: 30
+        }
+      ],
+      total: 300,
+      status: 'Delivered',
+      date: '2024-02-23',
+      deliveryDate: '2024-02-26',
+      seller: 'Green Harvest',
+      location: 'Sector 18, Noida',
+      paymentMethod: 'Cash on Delivery',
+      buyerId: 'BUY002',
+      sellerId: 'SELL002'
+    },
+    {
+      id: 'ORD003',
+      items: [
+        {
+          name: 'Green Peas',
+          quantity: 2,
+          unit: 'kg',
+          price: 60
+        },
+        {
+          name: 'Cauliflower',
+          quantity: 1,
+          unit: 'piece',
+          price: 40
+        }
+      ],
+      total: 160,
+      status: 'Pending',
+      date: '2024-02-24',
+      deliveryDate: '2024-02-27',
+      seller: 'Organic Farms',
+      location: 'Sector 45, Noida',
+      paymentMethod: 'Card',
+      buyerId: 'BUY001',
+      sellerId: 'SELL003'
+    }
+  ];
+
+  // Dummy data for products
+  private static readonly newDummyProducts: Product[] = [
+    {
+      id: 'p1',
+      name: 'Fresh Tomatoes',
+      description: 'Organic farm-fresh tomatoes',
+      price: 40,
+      quantity: 100,
+      unit: 'kg',
+      category: 'Vegetables',
+      image: 'https://images.unsplash.com/photo-1546470427-227c7369a9b0',
+      sellerId: 'seller1'
+    },
+    {
+      id: 'p2',
+      name: 'Red Onions',
+      description: 'Premium quality red onions',
+      price: 35,
+      quantity: 150,
+      unit: 'kg',
+      category: 'Vegetables',
+      image: 'https://images.unsplash.com/photo-1518977956812-cd3dbadaaf31',
+      sellerId: 'seller1'
+    },
+    {
+      id: 'p3',
+      name: 'Basmati Rice',
+      description: 'Premium long-grain basmati rice',
+      price: 85,
+      quantity: 8,
+      unit: 'kg',
+      category: 'Grains',
+      image: 'https://images.unsplash.com/photo-1586201375761-83865001e31c',
+      sellerId: 'seller1'
+    },
+    {
+      id: 'p4',
+      name: 'Green Apples',
+      description: 'Fresh and crispy green apples',
+      price: 120,
+      quantity: 75,
+      unit: 'kg',
+      category: 'Fruits',
+      image: 'https://images.unsplash.com/photo-1619546813926-a78fa6372cd2',
+      sellerId: 'seller1'
+    },
+    {
+      id: 'p5',
+      name: 'Organic Potatoes',
+      description: 'Farm-fresh organic potatoes',
+      price: 30,
+      quantity: 5,
+      unit: 'kg',
+      category: 'Vegetables',
+      image: 'https://images.unsplash.com/photo-1518977676601-b53f82aba655',
+      sellerId: 'seller1'
+    }
+  ];
+
+  // Dummy data for orders
+  private static readonly newDummyOrders = [
+    {
+      id: 'ord1',
+      customerName: 'Rahul Kumar',
+      items: [
+        { name: 'Fresh Tomatoes', quantity: 5 },
+        { name: 'Red Onions', quantity: 3 }
+      ],
+      total: 305,
+      status: 'Delivered',
+      date: '2024-01-15',
+      sellerId: 'seller1'
+    },
+    {
+      id: 'ord2',
+      customerName: 'Priya Sharma',
+      items: [
+        { name: 'Basmati Rice', quantity: 10 },
+        { name: 'Green Apples', quantity: 2 }
+      ],
+      total: 1090,
+      status: 'Processing',
+      date: '2024-01-16',
+      sellerId: 'seller1'
+    },
+    {
+      id: 'ord3',
+      customerName: 'Amit Patel',
+      items: [
+        { name: 'Organic Potatoes', quantity: 8 },
+        { name: 'Fresh Tomatoes', quantity: 2 }
+      ],
+      total: 320,
+      status: 'Pending',
+      date: '2024-01-16',
+      sellerId: 'seller1'
+    },
+    {
+      id: 'ord4',
+      customerName: 'Sneha Reddy',
+      items: [
+        { name: 'Green Apples', quantity: 3 },
+        { name: 'Red Onions', quantity: 4 }
+      ],
+      total: 500,
+      status: 'Cancelled',
+      date: '2024-01-14',
+      sellerId: 'seller1'
+    }
+  ];
+
+  // Product Methods
   static getProducts(): Product[] {
     const productsData = sessionStorage.getItem(this.PRODUCTS_KEY);
-    return productsData ? JSON.parse(productsData) : [];
+    return productsData ? JSON.parse(productsData) : [...this.dummyProducts, ...this.newDummyProducts];
   }
 
-  // Save products to session storage
+  static getProductsBySeller(sellerId: string): Product[] {
+    return this.getProducts().filter(product => product.sellerId === sellerId);
+  }
+
+  static updateProductStock(productId: string, newQuantity: number): boolean {
+    const products = this.getProducts();
+    const productIndex = products.findIndex(p => p.id === productId);
+    if (productIndex === -1) return false;
+    products[productIndex].quantity = newQuantity;
+    this.setProducts(products);
+    return true;
+  }
+
   static setProducts(products: Product[]): void {
     sessionStorage.setItem(this.PRODUCTS_KEY, JSON.stringify(products));
   }
 
-  // Get merged products with combined quantities
-  static getMergedProducts(page: number = 1): { products: Product[], totalPages: number } {
-    const products = this.getProducts();
-    const mergedProducts = new Map<string, Product>();
+  // Order Methods
+  static getOrders(): Order[] {
+    const ordersData = sessionStorage.getItem(this.ORDERS_KEY);
+    return ordersData ? JSON.parse(ordersData) : [...this.dummyOrders, ...this.newDummyOrders];
+  }
 
-    // Merge products with same name and unit
-    products.forEach(product => {
-      const key = `${product.name}_${product.unit}`;
-      if (mergedProducts.has(key)) {
-        const existing = mergedProducts.get(key)!;
-        existing.stock += product.stock;
-        if (new Date(product.lastUpdated) > new Date(existing.lastUpdated)) {
-          existing.lastUpdated = product.lastUpdated;
-        }
-      } else {
-        mergedProducts.set(key, { ...product });
-      }
-    });
+  static getOrdersBySeller(sellerId: string): Order[] {
+    return this.getOrders().filter(order => order.sellerId === sellerId);
+  }
 
-    const allProducts = Array.from(mergedProducts.values());
-    const totalProducts = allProducts.length;
-    const totalPages = Math.ceil(totalProducts / this.ITEMS_PER_PAGE);
+  static getOrdersByBuyer(buyerId: string): Order[] {
+    return this.getOrders().filter(order => order.buyerId === buyerId);
+  }
+
+  static getPaginatedOrders(page: number = 1, filter?: 'active' | 'completed' | 'all'): { orders: Order[], totalPages: number } {
+    let filteredOrders = this.getOrders();
     
-    // Calculate slice for current page
+    if (filter === 'active') {
+      filteredOrders = this.getOrders().filter(order => 
+        order.status === 'Processing' || order.status === 'Pending'
+      );
+    } else if (filter === 'completed') {
+      filteredOrders = this.getOrders().filter(order => 
+        order.status === 'Delivered' || order.status === 'Cancelled'
+      );
+    }
+
     const startIndex = (page - 1) * this.ITEMS_PER_PAGE;
     const endIndex = startIndex + this.ITEMS_PER_PAGE;
-    const paginatedProducts = allProducts.slice(startIndex, endIndex);
+    const totalPages = Math.ceil(filteredOrders.length / this.ITEMS_PER_PAGE);
 
     return {
-      products: paginatedProducts,
+      orders: filteredOrders.slice(startIndex, endIndex),
       totalPages
     };
   }
 
-  // Get all orders from session storage
-  static getOrders(): Order[] {
-    const ordersData = sessionStorage.getItem(this.ORDERS_KEY);
-    return ordersData ? JSON.parse(ordersData) : [];
+  static cancelOrder(orderId: string): boolean {
+    const orders = this.getOrders();
+    const orderIndex = orders.findIndex(order => order.id === orderId);
+    if (orderIndex === -1 || orders[orderIndex].status === 'Delivered') {
+      return false;
+    }
+    orders[orderIndex].status = 'Cancelled';
+    this.setOrders(orders);
+    return true;
   }
 
-  // Save orders to session storage
   static setOrders(orders: Order[]): void {
     sessionStorage.setItem(this.ORDERS_KEY, JSON.stringify(orders));
   }
 
-  // Get paginated orders
-  static getPaginatedOrders(page: number = 1, filter?: 'active' | 'completed' | 'all'): { orders: Order[], totalPages: number } {
-    const orders = this.getOrders();
-    
-    // Apply filter if specified
-    const filteredOrders = filter && filter !== 'all'
-      ? orders.filter(order => {
-          if (filter === 'active') return order.status !== 'Delivered' && order.status !== 'Cancelled';
-          if (filter === 'completed') return order.status === 'Delivered';
-          return true;
-        })
-      : orders;
-
-    // Calculate pagination
-    const totalPages = Math.ceil(filteredOrders.length / this.ITEMS_PER_PAGE);
-    const startIndex = (page - 1) * this.ITEMS_PER_PAGE;
-    const endIndex = startIndex + this.ITEMS_PER_PAGE;
-    const paginatedOrders = filteredOrders.slice(startIndex, endIndex);
-
-    return {
-      orders: paginatedOrders,
-      totalPages
-    };
+  static getProductById(productId: string): Product | undefined {
+    return this.getProducts().find(product => product.id === productId);
   }
 
-  // Add new order and update product quantities
-  static addOrder(order: Order): boolean {
-    // Get current inventory and orders
-    const inventory = this.getProducts();
-    const orders = this.getOrders();
-
-    // Check if we have enough stock for all items
-    const canFulfillOrder = order.items.every(orderItem => {
-      const product = inventory.find(p => p.name === orderItem.name);
-      return product && product.stock >= orderItem.quantity;
-    });
-
-    if (!canFulfillOrder) {
-      return false; // Cannot fulfill order due to insufficient stock
-    }
-
-    // Update product quantities
-    const updatedInventory = inventory.map(product => {
-      const orderItem = order.items.find(item => item.name === product.name);
-      if (orderItem) {
-        return {
-          ...product,
-          stock: product.stock - orderItem.quantity,
-          lastUpdated: new Date().toISOString().split('T')[0]
-        };
-      }
-      return product;
-    });
-
-    // Save updated inventory and new order
-    this.setProducts(updatedInventory);
-    this.setOrders([...orders, order]);
-
-    return true;
-  }
-
-  // Update product stock considering merged products
-  static updateProductStock(productName: string, unit: string, stockDiff: number): boolean {
+  static addProduct(product: Product): void {
     const products = this.getProducts();
-    const matchingProducts = products.filter(
-      p => p.name.toLowerCase() === productName.toLowerCase() && p.unit === unit
-    );
-
-    if (matchingProducts.length === 0) {
-      return false;
-    }
-
-    // Calculate total available stock
-    const totalStock = matchingProducts.reduce((sum, p) => sum + (p.stock || 0), 0);
-
-    // Check if we have enough stock for reduction
-    if (stockDiff < 0 && Math.abs(stockDiff) > totalStock) {
-      return false;
-    }
-
-    // Distribute stock change proportionally
-    let remainingDiff = stockDiff;
-    const updatedProducts = products.map(product => {
-      if (product.name.toLowerCase() === productName.toLowerCase() && product.unit === unit) {
-        const currentStock = product.stock || 0;
-        const proportion = currentStock / totalStock;
-        const stockChange = Math.round(stockDiff * proportion);
-        remainingDiff -= stockChange;
-
-        return {
-          ...product,
-          stock: currentStock + stockChange,
-          lastUpdated: new Date().toISOString()
-        };
-      }
-      return product;
-    });
-
-    // Add any remaining difference to the first matching product
-    if (remainingDiff !== 0) {
-      const firstMatch = updatedProducts.find(
-        p => p.name.toLowerCase() === productName.toLowerCase() && p.unit === unit
-      );
-      if (firstMatch) {
-        firstMatch.stock = (firstMatch.stock || 0) + remainingDiff;
-      }
-    }
-
-    this.setProducts(updatedProducts);
-    return true;
+    products.push(product);
+    this.setProducts(products);
   }
 
-  // Update product stock (for sellers)
-  static updateProductStockById(productId: string, newStock: number): boolean {
-    const inventory = this.getProducts();
-    const product = inventory.find(p => p.id === productId);
-
-    if (!product) {
-      return false;
+  static updateProduct(productId: string, updates: Partial<Product>): void {
+    const products = this.getProducts();
+    const index = products.findIndex(p => p.id === productId);
+    if (index !== -1) {
+      products[index] = { ...products[index], ...updates };
+      this.setProducts(products);
     }
-
-    const updatedProduct = {
-      ...product,
-      stock: product.stock + newStock, // Add to existing stock
-      lastUpdated: new Date().toISOString().split('T')[0]
-    };
-
-    this.setProducts(inventory.map(p => p.id === productId ? updatedProduct : p));
-    return true;
   }
 
-  // Check if product has enough stock
-  static hasEnoughStock(productId: string, requestedQuantity: number): boolean {
-    const inventory = this.getProducts();
-    const product = inventory.find(p => p.id === productId);
-    return product ? product.stock >= requestedQuantity : false;
+  static deleteProduct(productId: string): void {
+    const products = this.getProducts();
+    const index = products.findIndex(p => p.id === productId);
+    if (index !== -1) {
+      products.splice(index, 1);
+      this.setProducts(products);
+    }
   }
 
-  // Get current stock level for a product
-  static getProductStock(productId: string): number {
-    const inventory = this.getProducts();
-    const product = inventory.find(p => p.id === productId);
-    return product ? product.stock : 0;
+  static getOrderById(orderId: string) {
+    return this.getOrders().find(order => order.id === orderId);
   }
 
-  // Cancel order and restore product quantities
-  static cancelOrder(orderId: string): boolean {
+  static updateOrderStatus(orderId: string, status: string) {
     const orders = this.getOrders();
-    const orderToCancel = orders.find(o => o.id === orderId);
-
-    if (!orderToCancel || orderToCancel.status === 'Delivered') {
-      return false;
+    const order = orders.find(order => order.id === orderId);
+    if (order) {
+      order.status = status;
+      this.setOrders(orders);
     }
-
-    // Restore product quantities
-    const inventory = this.getProducts();
-    const updatedInventory = inventory.map(product => {
-      const orderItem = orderToCancel.items.find(item => item.name === product.name);
-      if (orderItem) {
-        return {
-          ...product,
-          stock: product.stock + orderItem.quantity,
-          lastUpdated: new Date().toISOString().split('T')[0]
-        };
-      }
-      return product;
-    });
-
-    // Update order status to cancelled
-    const updatedOrders = orders.map(order => 
-      order.id === orderId 
-        ? { ...order, status: 'Cancelled' }
-        : order
-    );
-
-    // Save updates
-    this.setProducts(updatedInventory);
-    this.setOrders(updatedOrders);
-
-    return true;
-  }
-
-  // Get all products with low stock (below threshold)
-  static getLowStockProducts(threshold: number = 10): Product[] {
-    const inventory = this.getProducts();
-    return inventory.filter(product => product.stock <= threshold);
   }
 }
 

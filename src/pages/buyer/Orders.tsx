@@ -146,7 +146,7 @@ export default function BuyerOrders() {
                       <p className="text-sm font-medium text-gray-500">Seller: {order.seller}</p>
                       <p className="text-sm text-gray-500">Payment: {order.paymentMethod}</p>
                     </div>
-                    {order.items.map((item, index) => (
+                    {order.items.map((item: any, index: number) => (
                       <div key={index} className="flex justify-between items-center py-2">
                         <div className="flex items-center">
                           <span className="text-sm text-gray-900">{item.name}</span>

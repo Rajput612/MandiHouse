@@ -1,332 +1,236 @@
-import React, { useState } from 'react';
-import { useAuth } from '../../context/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { Product } from '../../types/Product';
+import ProductManager from '../../utils/productManager';
 
-// Dummy data for demonstration
-const recentOrders = [
-  { 
-    id: '1', 
-    customer: 'John Doe', 
-    product: 'Organic Tomatoes', 
-    amount: 2500, 
-    status: 'Pending',
-    date: '2024-02-24',
-    location: 'Mumbai, Maharashtra'
-  },
-  { 
-    id: '2', 
-    customer: 'Jane Smith', 
-    product: 'Fresh Potatoes', 
-    amount: 1800, 
-    status: 'Delivered',
-    date: '2024-02-23',
-    location: 'Delhi, NCR'
-  },
-  { 
-    id: '3', 
-    customer: 'Mike Johnson', 
-    product: 'Green Peas', 
-    amount: 3200, 
-    status: 'Processing',
-    date: '2024-02-24',
-    location: 'Bangalore, Karnataka'
-  },
-  { 
-    id: '4', 
-    customer: 'Sarah Wilson', 
-    product: 'Mixed Vegetables', 
-    amount: 4500, 
-    status: 'Pending',
-    date: '2024-02-24',
-    location: 'Chennai, Tamil Nadu'
-  },
-  { 
-    id: '5', 
-    customer: 'Raj Patel', 
-    product: 'Organic Onions', 
-    amount: 1200, 
-    status: 'Delivered',
-    date: '2024-02-23',
-    location: 'Ahmedabad, Gujarat'
-  }
-];
+interface DashboardStats {
+  totalProducts: number;
+  totalOrders: number;
+  totalRevenue: number;
+  lowStockProducts: number;
+}
 
-const productInventory = [
-  { 
-    id: '1', 
-    name: 'Organic Tomatoes', 
-    stock: 150, 
-    price: 40, 
-    unit: 'kg',
-    category: 'Vegetables',
-    lastUpdated: '2024-02-24'
-  },
-  { 
-    id: '2', 
-    name: 'Fresh Potatoes', 
-    stock: 300, 
-    price: 30, 
-    unit: 'kg',
-    category: 'Vegetables',
-    lastUpdated: '2024-02-24'
-  },
-  { 
-    id: '3', 
-    name: 'Green Peas', 
-    stock: 100, 
-    price: 60, 
-    unit: 'kg',
-    category: 'Vegetables',
-    lastUpdated: '2024-02-23'
-  },
-  { 
-    id: '4', 
-    name: 'Organic Onions', 
-    stock: 250, 
-    price: 35, 
-    unit: 'kg',
-    category: 'Vegetables',
-    lastUpdated: '2024-02-24'
-  },
-  { 
-    id: '5', 
-    name: 'Red Carrots', 
-    stock: 180, 
-    price: 45, 
-    unit: 'kg',
-    category: 'Vegetables',
-    lastUpdated: '2024-02-23'
-  },
-  { 
-    id: '6', 
-    name: 'Fresh Cauliflower', 
-    stock: 120, 
-    price: 40, 
-    unit: 'kg',
-    category: 'Vegetables',
-    lastUpdated: '2024-02-24'
-  }
-];
+interface Order {
+  id: string;
+  customerName: string;
+  items: { name: string; quantity: number }[];
+  total: number;
+  status: string;
+  date: string;
+}
 
-export default function SellerDashboard() {
-  const { user, isAuthenticated } = useAuth();
-  const navigate = useNavigate();
-  const [timeRange, setTimeRange] = useState<'today' | 'week' | 'month'>('today');
-  
-  // Pagination states
-  const [ordersPage, setOrdersPage] = useState(1);
-  const [inventoryPage, setInventoryPage] = useState(1);
-  const ITEMS_PER_PAGE = 5;
+export default function Dashboard() {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [stats, setStats] = useState<DashboardStats>({
+    totalProducts: 0,
+    totalOrders: 0,
+    totalRevenue: 0,
+    lowStockProducts: 0
+  });
+  const sellerId = "seller1"; // Hardcoded for now, should come from auth
 
-  React.useEffect(() => {
-    if (!isAuthenticated || user?.userType !== 'seller') {
-      navigate('/');
-    }
-  }, [isAuthenticated, user, navigate]);
-
-  // Pagination calculations
-  const totalOrderPages = Math.ceil(recentOrders.length / ITEMS_PER_PAGE);
-  const totalInventoryPages = Math.ceil(productInventory.length / ITEMS_PER_PAGE);
-
-  // Get paginated data
-  const getPaginatedData = (data: any[], page: number) => {
-    const startIndex = (page - 1) * ITEMS_PER_PAGE;
-    const endIndex = startIndex + ITEMS_PER_PAGE;
-    return data.slice(startIndex, endIndex);
-  };
-
-  const paginatedOrders = getPaginatedData(recentOrders, ordersPage);
-  const paginatedInventory = getPaginatedData(productInventory, inventoryPage);
-
-  const PaginationControls = ({ currentPage, totalPages, onPageChange }: { 
-    currentPage: number; 
-    totalPages: number; 
-    onPageChange: (page: number) => void; 
-  }) => (
-    <div className="px-6 py-3 flex justify-between items-center border-t border-gray-200">
-      <button
-        onClick={() => onPageChange(currentPage - 1)}
-        disabled={currentPage === 1}
-        className={`px-3 py-1 rounded ${
-          currentPage === 1 
-            ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
-            : 'bg-green-500 text-white hover:bg-green-600'
-        }`}
-      >
-        Previous
-      </button>
-      <span className="text-sm text-gray-600">
-        Page {currentPage} of {totalPages}
-      </span>
-      <button
-        onClick={() => onPageChange(currentPage + 1)}
-        disabled={currentPage === totalPages}
-        className={`px-3 py-1 rounded ${
-          currentPage === totalPages 
-            ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
-            : 'bg-green-500 text-white hover:bg-green-600'
-        }`}
-      >
-        Next
-      </button>
-    </div>
-  );
-
-  const stats = [
-    { 
-      title: 'Total Sales', 
-      value: '₹45,000', 
-      change: '+12%', 
-      changeType: 'positive',
-      subtext: 'Last 30 days'
-    },
-    { 
-      title: 'Active Orders', 
-      value: '23', 
-      change: '+5', 
-      changeType: 'positive',
-      subtext: 'Pending delivery'
-    },
-    { 
-      title: 'Products Listed', 
-      value: '15', 
-      change: '0', 
-      changeType: 'neutral',
-      subtext: 'In stock'
-    },
-    { 
-      title: 'Customer Rating', 
-      value: '4.8', 
-      change: '+0.2', 
-      changeType: 'positive',
-      subtext: 'Based on 156 reviews'
-    }
-  ];
+  useEffect(() => {
+    const sellerProducts = ProductManager.getProductsBySeller(sellerId);
+    const sellerOrders = ProductManager.getOrdersBySeller(sellerId);
+    
+    setProducts(sellerProducts);
+    setOrders(sellerOrders);
+    
+    // Calculate dashboard stats
+    setStats({
+      totalProducts: sellerProducts.length,
+      totalOrders: sellerOrders.length,
+      totalRevenue: sellerOrders.reduce((sum, order) => sum + order.total, 0),
+      lowStockProducts: sellerProducts.filter(p => p.quantity < 10).length
+    });
+  }, []);
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold text-gray-900">Seller Dashboard</h1>
-          <p className="text-gray-500">Welcome back, manage your products and orders</p>
+    <div className="container mx-auto px-4 py-8">
+      <h1 className="text-3xl font-bold mb-8">Seller Dashboard</h1>
+      
+      {/* Stats Overview */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <h3 className="text-gray-500 text-sm font-medium">Total Products</h3>
+          <p className="text-2xl font-bold text-gray-900">{stats.totalProducts}</p>
         </div>
-
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          {stats.map((stat, index) => (
-            <div key={index} className="bg-white p-6 rounded-lg shadow-sm">
-              <h3 className="text-sm font-medium text-gray-500">{stat.title}</h3>
-              <div className="mt-2 flex items-baseline">
-                <p className="text-2xl font-semibold text-gray-900">{stat.value}</p>
-                <span className={`ml-2 text-sm font-medium ${
-                  stat.changeType === 'positive' ? 'text-green-600' : 
-                  stat.changeType === 'negative' ? 'text-red-600' : 
-                  'text-gray-500'
-                }`}>
-                  {stat.change}
-                </span>
-              </div>
-              <p className="text-sm text-gray-500">{stat.subtext}</p>
-            </div>
-          ))}
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <h3 className="text-gray-500 text-sm font-medium">Total Orders</h3>
+          <p className="text-2xl font-bold text-gray-900">{stats.totalOrders}</p>
         </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Recent Orders */}
-          <div className="bg-white rounded-lg shadow-sm">
-            <div className="p-6 border-b border-gray-200">
-              <h2 className="text-lg font-medium text-gray-900">Recent Orders</h2>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order ID</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {paginatedOrders.map((order) => (
-                    <tr key={order.id}>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">#{order.id}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{order.customer}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{order.product}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">₹{order.amount}</td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                          order.status === 'Delivered' ? 'bg-green-100 text-green-800' :
-                          order.status === 'Processing' ? 'bg-yellow-100 text-yellow-800' :
-                          'bg-gray-100 text-gray-800'
-                        }`}>
-                          {order.status}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{order.date}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{order.location}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              <PaginationControls
-                currentPage={ordersPage}
-                totalPages={totalOrderPages}
-                onPageChange={setOrdersPage}
-              />
-            </div>
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <h3 className="text-gray-500 text-sm font-medium">Total Revenue</h3>
+          <p className="text-2xl font-bold text-gray-900">₹{stats.totalRevenue}</p>
+        </div>
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <h3 className="text-gray-500 text-sm font-medium">Low Stock Products</h3>
+          <p className="text-2xl font-bold text-red-600">{stats.lowStockProducts}</p>
+        </div>
+      </div>
+      
+      {/* Quick Actions */}
+      <div className="bg-white rounded-lg shadow-md p-6 mb-8">
+        <h2 className="text-xl font-semibold mb-4">Quick Actions</h2>
+        <div className="flex space-x-4">
+          <button className="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600">
+            Add New Product
+          </button>
+          <button className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600">
+            View All Orders
+          </button>
+          <button className="bg-yellow-500 text-white px-4 py-2 rounded-md hover:bg-yellow-600">
+            Update Inventory
+          </button>
+        </div>
+      </div>
+      
+      {/* Inventory Section */}
+      <div className="bg-white rounded-lg shadow-md p-6 mb-8">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-semibold">Your Inventory</h2>
+          <div className="flex space-x-2">
+            <input 
+              type="text" 
+              placeholder="Search products..."
+              className="px-3 py-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+            />
+            <select className="px-3 py-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
+              <option value="">All Categories</option>
+              <option value="vegetables">Vegetables</option>
+              <option value="fruits">Fruits</option>
+              <option value="grains">Grains</option>
+            </select>
           </div>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantity</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {products.map((product) => (
+                <tr key={product.id}>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center">
+                      <div className="h-10 w-10 flex-shrink-0">
+                        <img className="h-10 w-10 rounded-full object-cover" src={product.image} alt={product.name} />
+                      </div>
+                      <div className="ml-4">
+                        <div className="text-sm font-medium text-gray-900">{product.name}</div>
+                        <div className="text-sm text-gray-500">ID: {product.id}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-gray-900">₹{product.price}</div>
+                    <div className="text-sm text-gray-500">per {product.unit}</div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-gray-900">{product.quantity}</div>
+                    <div className="text-sm text-gray-500">{product.unit}</div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                      {product.category}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                      product.quantity > 10 
+                        ? 'bg-green-100 text-green-800' 
+                        : 'bg-red-100 text-red-800'
+                    }`}>
+                      {product.quantity > 10 ? 'In Stock' : 'Low Stock'}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <button className="text-green-600 hover:text-green-900 mr-4">Edit</button>
+                    <button className="text-red-600 hover:text-red-900">Delete</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
 
-          {/* Inventory Management */}
-          <div className="bg-white rounded-lg shadow-sm">
-            <div className="p-6 border-b border-gray-200 flex justify-between items-center">
-              <h2 className="text-lg font-medium text-gray-900">Inventory Management</h2>
-              <button className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500">
-                Add Product
-              </button>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stock</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price/Unit</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Updated</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {paginatedInventory.map((product) => (
-                    <tr key={product.id}>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{product.name}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {product.stock} {product.unit}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        ₹{product.price}/{product.unit}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{product.category}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{product.lastUpdated}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        <button className="text-blue-600 hover:text-blue-800 mr-3">Edit</button>
-                        <button className="text-red-600 hover:text-red-800">Delete</button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              <PaginationControls
-                currentPage={inventoryPage}
-                totalPages={totalInventoryPages}
-                onPageChange={setInventoryPage}
-              />
-            </div>
+      {/* Recent Orders Section */}
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-semibold">Recent Orders</h2>
+          <div className="flex space-x-2">
+            <select className="px-3 py-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
+              <option value="all">All Status</option>
+              <option value="pending">Pending</option>
+              <option value="processing">Processing</option>
+              <option value="delivered">Delivered</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
           </div>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order ID</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Items</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {orders.map((order) => (
+                <tr key={order.id}>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-gray-900">{order.id}</div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm font-medium text-gray-900">{order.customerName}</div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="text-sm text-gray-900">
+                      {order.items.map((item, index) => (
+                        <div key={index}>
+                          {item.name} x {item.quantity}
+                        </div>
+                      ))}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-gray-900">₹{order.total}</div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                      order.status === 'Delivered' ? 'bg-green-100 text-green-800' :
+                      order.status === 'Processing' ? 'bg-yellow-100 text-yellow-800' :
+                      order.status === 'Cancelled' ? 'bg-red-100 text-red-800' :
+                      'bg-blue-100 text-blue-800'
+                    }`}>
+                      {order.status}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-gray-900">{order.date}</div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <button className="text-blue-600 hover:text-blue-900 mr-2">View</button>
+                    <button className="text-green-600 hover:text-green-900">Update</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
