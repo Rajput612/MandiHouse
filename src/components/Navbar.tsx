@@ -33,19 +33,28 @@ export default function Navbar() {
           
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-6">
-            {isAuthenticated && user?.userType === 'seller' ? (
-              <>
-                <Link to="/seller/dashboard" className="text-gray-600 hover:text-green-600">Dashboard</Link>
-                <Link to="/seller/insights" className="text-gray-600 hover:text-green-600">Insights</Link>
-                <Link to="/seller/advanced-insights" className="text-gray-600 hover:text-green-600">Advanced Analytics</Link>
-                <Link to="/seller/orders" className="text-gray-600 hover:text-green-600">Orders</Link>
-                <Link to="/seller/inventory" className="text-gray-600 hover:text-green-600">Inventory</Link>
-              </>
+            {isAuthenticated ? (
+              user?.userType === 'seller' ? (
+                <>
+                  <Link to="/seller/dashboard" className="text-gray-600 hover:text-green-600">Dashboard</Link>
+                  <Link to="/seller/insights" className="text-gray-600 hover:text-green-600">Insights</Link>
+                  <Link to="/seller/advanced-insights" className="text-gray-600 hover:text-green-600">Advanced Analytics</Link>
+                  <Link to="/seller/orders" className="text-gray-600 hover:text-green-600">Orders</Link>
+                  <Link to="/seller/inventory" className="text-gray-600 hover:text-green-600">Inventory</Link>
+                </>
+              ) : (
+                <>
+                  <Link to="/products" className="text-gray-600 hover:text-green-600">Products</Link>
+                  <Link to="/orders" className="text-gray-600 hover:text-green-600">Orders</Link>
+                  <Link to="/cart" className="text-gray-600 hover:text-green-600">Cart</Link>
+                </>
+              )
             ) : (
               <>
-                <Link to="/products" className="text-gray-600 hover:text-green-600">Products</Link>
-                <Link to="/orders" className="text-gray-600 hover:text-green-600">Orders</Link>
-                <Link to="/cart" className="text-gray-600 hover:text-green-600">Cart</Link>
+                <a href="#featured" className="text-gray-600 hover:text-green-600">Featured</a>
+                <a href="#categories" className="text-gray-600 hover:text-green-600">Categories</a>
+                <a href="#features" className="text-gray-600 hover:text-green-600">About Us</a>
+                <a href="#contact" className="text-gray-600 hover:text-green-600">Contact</a>
               </>
             )}
           </div>
@@ -176,19 +185,28 @@ export default function Navbar() {
         {isMobileMenuOpen && (
           <div className="md:hidden mt-4 py-4 border-t border-gray-100">
             <div className="flex flex-col gap-4">
-              {isAuthenticated && user?.userType === 'seller' ? (
-                <>
-                  <Link to="/seller/dashboard" className="text-gray-600 hover:text-green-600" onClick={() => setIsMobileMenuOpen(false)}>Dashboard</Link>
-                  <Link to="/seller/insights" className="text-gray-600 hover:text-green-600" onClick={() => setIsMobileMenuOpen(false)}>Insights</Link>
-                  <Link to="/seller/advanced-insights" className="text-gray-600 hover:text-green-600" onClick={() => setIsMobileMenuOpen(false)}>Advanced Analytics</Link>
-                  <Link to="/seller/orders" className="text-gray-600 hover:text-green-600" onClick={() => setIsMobileMenuOpen(false)}>Orders</Link>
-                  <Link to="/seller/inventory" className="text-gray-600 hover:text-green-600" onClick={() => setIsMobileMenuOpen(false)}>Inventory</Link>
-                </>
+              {isAuthenticated ? (
+                user?.userType === 'seller' ? (
+                  <>
+                    <Link to="/seller/dashboard" className="text-gray-600 hover:text-green-600" onClick={() => setIsMobileMenuOpen(false)}>Dashboard</Link>
+                    <Link to="/seller/insights" className="text-gray-600 hover:text-green-600" onClick={() => setIsMobileMenuOpen(false)}>Insights</Link>
+                    <Link to="/seller/advanced-insights" className="text-gray-600 hover:text-green-600" onClick={() => setIsMobileMenuOpen(false)}>Advanced Analytics</Link>
+                    <Link to="/seller/orders" className="text-gray-600 hover:text-green-600" onClick={() => setIsMobileMenuOpen(false)}>Orders</Link>
+                    <Link to="/seller/inventory" className="text-gray-600 hover:text-green-600" onClick={() => setIsMobileMenuOpen(false)}>Inventory</Link>
+                  </>
+                ) : (
+                  <>
+                    <Link to="/products" className="text-gray-600 hover:text-green-600" onClick={() => setIsMobileMenuOpen(false)}>Products</Link>
+                    <Link to="/orders" className="text-gray-600 hover:text-green-600" onClick={() => setIsMobileMenuOpen(false)}>Orders</Link>
+                    <Link to="/cart" className="text-gray-600 hover:text-green-600" onClick={() => setIsMobileMenuOpen(false)}>Cart</Link>
+                  </>
+                )
               ) : (
                 <>
-                  <Link to="/products" className="text-gray-600 hover:text-green-600" onClick={() => setIsMobileMenuOpen(false)}>Products</Link>
-                  <Link to="/orders" className="text-gray-600 hover:text-green-600" onClick={() => setIsMobileMenuOpen(false)}>Orders</Link>
-                  <Link to="/cart" className="text-gray-600 hover:text-green-600" onClick={() => setIsMobileMenuOpen(false)}>Cart</Link>
+                  <a href="#featured" className="text-gray-600 hover:text-green-600" onClick={() => setIsMobileMenuOpen(false)}>Featured</a>
+                  <a href="#categories" className="text-gray-600 hover:text-green-600" onClick={() => setIsMobileMenuOpen(false)}>Categories</a>
+                  <a href="#features" className="text-gray-600 hover:text-green-600" onClick={() => setIsMobileMenuOpen(false)}>About Us</a>
+                  <a href="#contact" className="text-gray-600 hover:text-green-600" onClick={() => setIsMobileMenuOpen(false)}>Contact</a>
                 </>
               )}
             </div>
