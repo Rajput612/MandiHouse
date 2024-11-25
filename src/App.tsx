@@ -11,6 +11,7 @@ import SignupPage from './pages/auth/SignupPage';
 import ProfilePage from './pages/ProfilePage';
 import SellerDashboard from './pages/seller/Dashboard';
 import BuyerOrders from './pages/buyer/Orders';
+import ProductListingPage from './pages/ProductListingPage';
 import { AuthProvider } from './context/AuthContext';
 
 function HomePage() {
@@ -33,6 +34,7 @@ function App() {
           <Navbar />
           <Routes>
             <Route path="/" element={<HomePage />} />
+            <Route path="/products" element={<ProductListingPage />} />
             <Route path="/auth/:userType/login" element={<LoginPage />} />
             <Route path="/auth/:userType/signup" element={<SignupPage />} />
             <Route path="/profile" element={<ProfilePage />} />

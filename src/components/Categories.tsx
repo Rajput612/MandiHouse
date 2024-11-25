@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const featuredCategories = [
   {
@@ -40,12 +41,18 @@ const categories = [
     name: 'Groceries'
   },
   {
-    iconClass: 'fas fa-tractor',
-    name: 'Equipment'
+    iconClass: 'fas fa-fish',
+    name: 'Fish'
   }
 ];
 
 export default function Categories() {
+  const navigate = useNavigate();
+
+  const handleCategoryClick = (categoryName: string) => {
+    navigate(`/products?category=${encodeURIComponent(categoryName)}`);
+  };
+
   return (
     <>
       {/* Featured Categories Section */}
@@ -57,6 +64,7 @@ export default function Categories() {
               <div 
                 key={index} 
                 className="bg-green-500 p-4 sm:p-6 rounded-lg text-center hover:bg-green-600 transition-all duration-300 cursor-pointer shadow-sm hover:shadow-md"
+                onClick={() => handleCategoryClick(category.name)}
               >
                 <i className="text-white text-3xl sm:text-4xl mb-3 sm:mb-4 block">
                   <i className={category.iconClass}></i>
@@ -78,6 +86,7 @@ export default function Categories() {
               <div 
                 key={index} 
                 className="bg-white p-3 sm:p-4 md:p-6 rounded-lg text-center hover:bg-gray-50 transition-all duration-300 cursor-pointer shadow-sm hover:shadow-md border border-gray-100"
+                onClick={() => handleCategoryClick(category.name)}
               >
                 <i className={`${category.iconClass} text-2xl sm:text-3xl mb-2 sm:mb-3 text-green-500`}></i>
                 <p className="text-gray-600 font-medium text-sm sm:text-base">
