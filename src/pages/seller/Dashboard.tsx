@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Product } from '../../types/Product';
 import ProductManager from '../../utils/productManager';
 
@@ -18,9 +19,80 @@ interface Order {
   date: string;
 }
 
+interface FilterState {
+  column: string;
+  value: string;
+}
+
+interface NewProduct {
+  name: string;
+  description: string;
+  price: string;
+  quantity: string;
+  category: string;
+  subcategory: string;
+  image: File | null;
+}
+
+const CATEGORIES_WITH_SUBCATEGORIES = {
+  vegetables: [
+    'Leafy Greens',
+    'Root Vegetables',
+    'Gourds',
+    'Exotic Vegetables',
+    'Seasonal Vegetables'
+  ],
+  fruits: [
+    'Citrus',
+    'Tropical',
+    'Berries',
+    'Stone Fruits',
+    'Exotic Fruits'
+  ],
+  grains: [
+    'Rice',
+    'Wheat',
+    'Millets',
+    'Pulses',
+    'Cereals'
+  ],
+  spices: [
+    'Whole Spices',
+    'Ground Spices',
+    'Masala Blends',
+    'Herbs',
+    'Exotic Spices'
+  ],
+  dairy: [
+    'Milk',
+    'Curd',
+    'Cheese',
+    'Butter',
+    'Paneer'
+  ]
+};
+
+const initialNewProduct: NewProduct = {
+  name: '',
+  description: '',
+  price: '',
+  quantity: '',
+  category: '',
+  subcategory: '',
+  image: null
+};
+
 export default function Dashboard() {
+  const navigate = useNavigate();
   const [products, setProducts] = useState<Product[]>([]);
+  const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
+  const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
+  const [productFilter, setProductFilter] = useState<FilterState>({ column: '', value: '' });
+  const [orderFilter, setOrderFilter] = useState<FilterState>({ column: '', value: '' });
+  const [isAddProductModalOpen, setIsAddProductModalOpen] = useState(false);
+  const [newProduct, setNewProduct] = useState<NewProduct>(initialNewProduct);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [stats, setStats] = useState<DashboardStats>({
     totalProducts: 0,
     totalOrders: 0,
@@ -34,7 +106,9 @@ export default function Dashboard() {
     const sellerOrders = ProductManager.getOrdersBySeller(sellerId);
     
     setProducts(sellerProducts);
+    setFilteredProducts(sellerProducts);
     setOrders(sellerOrders);
+    setFilteredOrders(sellerOrders);
     
     // Calculate dashboard stats
     setStats({
@@ -44,6 +118,123 @@ export default function Dashboard() {
       lowStockProducts: sellerProducts.filter(p => p.quantity < 10).length
     });
   }, []);
+
+  // Filter products based on column and value
+  useEffect(() => {
+    if (!productFilter.column || !productFilter.value) {
+      setFilteredProducts(products);
+      return;
+    }
+
+    const query = productFilter.value.toLowerCase();
+    const filtered = products.filter(product => {
+      switch (productFilter.column) {
+        case 'name':
+          return product.name.toLowerCase().includes(query);
+        case 'price':
+          return product.price.toString().includes(query);
+        case 'quantity':
+          return product.quantity.toString().includes(query);
+        case 'category':
+          return product.category.toLowerCase().includes(query);
+        case 'status':
+          const status = product.quantity > 10 ? 'in stock' : 'low stock';
+          return status.toLowerCase().includes(query);
+        default:
+          return true;
+      }
+    });
+    setFilteredProducts(filtered);
+  }, [productFilter, products]);
+
+  // Filter orders based on column and value
+  useEffect(() => {
+    if (!orderFilter.column || !orderFilter.value) {
+      setFilteredOrders(orders);
+      return;
+    }
+
+    const query = orderFilter.value.toLowerCase();
+    const filtered = orders.filter(order => {
+      switch (orderFilter.column) {
+        case 'id':
+          return order.id.toLowerCase().includes(query);
+        case 'customer':
+          return order.customerName.toLowerCase().includes(query);
+        case 'items':
+          return order.items.some(item => 
+            item.name.toLowerCase().includes(query) || 
+            item.quantity.toString().includes(query)
+          );
+        case 'total':
+          return order.total.toString().includes(query);
+        case 'status':
+          return order.status.toLowerCase().includes(query);
+        case 'date':
+          return order.date.toLowerCase().includes(query);
+        default:
+          return true;
+      }
+    });
+    setFilteredOrders(filtered);
+  }, [orderFilter, orders]);
+
+  const handleColumnFilter = (column: string, value: string, type: 'product' | 'order') => {
+    if (type === 'product') {
+      setProductFilter({ column, value });
+    } else {
+      setOrderFilter({ column, value });
+    }
+  };
+
+  const handleAddProduct = (e: React.FormEvent) => {
+    e.preventDefault();
+    // Here you would typically make an API call to add the product
+    const product = {
+      id: Date.now().toString(),
+      name: newProduct.name,
+      description: newProduct.description,
+      price: parseFloat(newProduct.price),
+      quantity: parseInt(newProduct.quantity),
+      category: newProduct.category,
+      subcategory: newProduct.subcategory,
+      image: imagePreview // In a real app, you'd handle image upload separately
+    };
+
+    setProducts(prev => [...prev, product]);
+    setIsAddProductModalOpen(false);
+    setNewProduct(initialNewProduct);
+    setImagePreview(null);
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setNewProduct(prev => ({ ...prev, image: file }));
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setNewProduct(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const category = e.target.value;
+    setNewProduct(prev => ({
+      ...prev,
+      category,
+      subcategory: '' // Reset subcategory when category changes
+    }));
+  };
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -69,73 +260,259 @@ export default function Dashboard() {
         </div>
       </div>
       
-      {/* Quick Actions */}
-      <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-        <h2 className="text-xl font-semibold mb-4">Quick Actions</h2>
-        <div className="flex space-x-4">
-          <button className="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600">
-            Add New Product
-          </button>
-          <button className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600">
-            View All Orders
-          </button>
-          <button className="bg-yellow-500 text-white px-4 py-2 rounded-md hover:bg-yellow-600">
-            Update Inventory
-          </button>
-        </div>
-      </div>
-      
-      {/* Inventory Section */}
-      <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold">Your Inventory</h2>
-          <div className="flex space-x-2">
-            <input 
-              type="text" 
-              placeholder="Search products..."
-              className="px-3 py-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-            />
-            <select className="px-3 py-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
-              <option value="">All Categories</option>
-              <option value="vegetables">Vegetables</option>
-              <option value="fruits">Fruits</option>
-              <option value="grains">Grains</option>
-            </select>
+      {/* Main Actions */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+        <button
+          onClick={() => setIsAddProductModalOpen(true)}
+          className="flex items-center justify-center p-6 bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow"
+        >
+          <div className="text-center">
+            <div className="text-2xl font-bold text-gray-800 mb-2">Add New Product</div>
+            <p className="text-gray-600">Add new products to your inventory</p>
           </div>
+        </button>
+
+        <button
+          onClick={() => navigate('/seller/insights')}
+          className="flex items-center justify-center p-6 bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow"
+        >
+          <div className="text-center">
+            <div className="text-2xl font-bold text-gray-800 mb-2">View Insights</div>
+            <p className="text-gray-600">Analyze your sales and performance metrics</p>
+          </div>
+        </button>
+      </div>
+
+      {/* Add Product Modal */}
+      {isAddProductModalOpen && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold">Add New Product</h3>
+              <button 
+                onClick={() => setIsAddProductModalOpen(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                ×
+              </button>
+            </div>
+            <form onSubmit={handleAddProduct}>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Product Name</label>
+                  <input
+                    type="text"
+                    name="name"
+                    value={newProduct.name}
+                    onChange={handleInputChange}
+                    className="mt-1 block w-full rounded-md border border-gray-300 shadow-sm p-2"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Description</label>
+                  <textarea
+                    name="description"
+                    value={newProduct.description}
+                    onChange={handleInputChange}
+                    className="mt-1 block w-full rounded-md border border-gray-300 shadow-sm p-2"
+                    rows={3}
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Price (₹)</label>
+                  <input
+                    type="number"
+                    name="price"
+                    value={newProduct.price}
+                    onChange={handleInputChange}
+                    className="mt-1 block w-full rounded-md border border-gray-300 shadow-sm p-2"
+                    min="0"
+                    step="0.01"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Quantity</label>
+                  <input
+                    type="number"
+                    name="quantity"
+                    value={newProduct.quantity}
+                    onChange={handleInputChange}
+                    className="mt-1 block w-full rounded-md border border-gray-300 shadow-sm p-2"
+                    min="0"
+                    required
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Category</label>
+                    <select
+                      name="category"
+                      value={newProduct.category}
+                      onChange={handleCategoryChange}
+                      className="mt-1 block w-full rounded-md border border-gray-300 shadow-sm p-2"
+                      required
+                    >
+                      <option value="">Select a category</option>
+                      {Object.keys(CATEGORIES_WITH_SUBCATEGORIES).map(category => (
+                        <option key={category} value={category}>
+                          {category.charAt(0).toUpperCase() + category.slice(1)}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Subcategory</label>
+                    <select
+                      name="subcategory"
+                      value={newProduct.subcategory}
+                      onChange={handleInputChange}
+                      className="mt-1 block w-full rounded-md border border-gray-300 shadow-sm p-2"
+                      required
+                      disabled={!newProduct.category}
+                    >
+                      <option value="">Select a subcategory</option>
+                      {newProduct.category && CATEGORIES_WITH_SUBCATEGORIES[newProduct.category as keyof typeof CATEGORIES_WITH_SUBCATEGORIES].map(subcategory => (
+                        <option key={subcategory} value={subcategory}>
+                          {subcategory}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Product Image</label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    className="mt-1 block w-full"
+                  />
+                  {imagePreview && (
+                    <div className="mt-2">
+                      <img 
+                        src={imagePreview} 
+                        alt="Preview" 
+                        className="h-32 w-32 object-cover rounded-md"
+                      />
+                    </div>
+                  )}
+                </div>
+                <div className="flex justify-end space-x-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsAddProductModalOpen(false)}
+                    className="px-4 py-2 border rounded-md text-gray-600 hover:bg-gray-50"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600"
+                  >
+                    Add Product
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Inventory Table */}
+      <div className="bg-white rounded-lg shadow-md overflow-hidden mb-8">
+        <div className="px-6 py-4 border-b border-gray-200">
+          <h2 className="text-xl font-semibold text-gray-800">Inventory</h2>
         </div>
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantity</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <div className="flex flex-col">
+                    <span>Product</span>
+                    <input
+                      type="text"
+                      placeholder="Filter product..."
+                      className="mt-1 px-2 py-1 text-sm border rounded focus:outline-none focus:ring-1 focus:ring-green-500"
+                      onChange={(e) => handleColumnFilter('name', e.target.value, 'product')}
+                    />
+                  </div>
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <div className="flex flex-col">
+                    <span>Price</span>
+                    <input
+                      type="text"
+                      placeholder="Filter price..."
+                      className="mt-1 px-2 py-1 text-sm border rounded focus:outline-none focus:ring-1 focus:ring-green-500"
+                      onChange={(e) => handleColumnFilter('price', e.target.value, 'product')}
+                    />
+                  </div>
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <div className="flex flex-col">
+                    <span>Quantity</span>
+                    <input
+                      type="text"
+                      placeholder="Filter quantity..."
+                      className="mt-1 px-2 py-1 text-sm border rounded focus:outline-none focus:ring-1 focus:ring-green-500"
+                      onChange={(e) => handleColumnFilter('quantity', e.target.value, 'product')}
+                    />
+                  </div>
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <div className="flex flex-col">
+                    <span>Category</span>
+                    <input
+                      type="text"
+                      placeholder="Filter category..."
+                      className="mt-1 px-2 py-1 text-sm border rounded focus:outline-none focus:ring-1 focus:ring-green-500"
+                      onChange={(e) => handleColumnFilter('category', e.target.value, 'product')}
+                    />
+                  </div>
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <div className="flex flex-col">
+                    <span>Status</span>
+                    <input
+                      type="text"
+                      placeholder="Filter status..."
+                      className="mt-1 px-2 py-1 text-sm border rounded focus:outline-none focus:ring-1 focus:ring-green-500"
+                      onChange={(e) => handleColumnFilter('status', e.target.value, 'product')}
+                    />
+                  </div>
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {products.map((product) => (
+              {filteredProducts.map((product) => (
                 <tr key={product.id}>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <div className="h-10 w-10 flex-shrink-0">
-                        <img className="h-10 w-10 rounded-full object-cover" src={product.image} alt={product.name} />
+                        <img 
+                          className="h-10 w-10 rounded-full object-cover" 
+                          src={product.image || '/placeholder.jpg'} 
+                          alt={product.name} 
+                        />
                       </div>
                       <div className="ml-4">
                         <div className="text-sm font-medium text-gray-900">{product.name}</div>
-                        <div className="text-sm text-gray-500">ID: {product.id}</div>
+                        <div className="text-sm text-gray-500">{product.description}</div>
                       </div>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-900">₹{product.price}</div>
-                    <div className="text-sm text-gray-500">per {product.unit}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-900">{product.quantity}</div>
-                    <div className="text-sm text-gray-500">{product.unit}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
@@ -152,7 +529,7 @@ export default function Dashboard() {
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <button className="text-green-600 hover:text-green-900 mr-4">Edit</button>
+                    <button className="text-indigo-600 hover:text-indigo-900 mr-2">Edit</button>
                     <button className="text-red-600 hover:text-red-900">Delete</button>
                   </td>
                 </tr>
@@ -166,31 +543,84 @@ export default function Dashboard() {
       <div className="bg-white rounded-lg shadow-md p-6">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-semibold">Recent Orders</h2>
-          <div className="flex space-x-2">
-            <select className="px-3 py-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
-              <option value="all">All Status</option>
-              <option value="pending">Pending</option>
-              <option value="processing">Processing</option>
-              <option value="delivered">Delivered</option>
-              <option value="cancelled">Cancelled</option>
-            </select>
-          </div>
         </div>
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order ID</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Items</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <div className="flex flex-col">
+                    <span>Order ID</span>
+                    <input
+                      type="text"
+                      placeholder="Filter ID..."
+                      className="mt-1 px-2 py-1 text-sm border rounded focus:outline-none focus:ring-1 focus:ring-green-500"
+                      onChange={(e) => handleColumnFilter('id', e.target.value, 'order')}
+                    />
+                  </div>
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <div className="flex flex-col">
+                    <span>Customer</span>
+                    <input
+                      type="text"
+                      placeholder="Filter customer..."
+                      className="mt-1 px-2 py-1 text-sm border rounded focus:outline-none focus:ring-1 focus:ring-green-500"
+                      onChange={(e) => handleColumnFilter('customer', e.target.value, 'order')}
+                    />
+                  </div>
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <div className="flex flex-col">
+                    <span>Items</span>
+                    <input
+                      type="text"
+                      placeholder="Filter items..."
+                      className="mt-1 px-2 py-1 text-sm border rounded focus:outline-none focus:ring-1 focus:ring-green-500"
+                      onChange={(e) => handleColumnFilter('items', e.target.value, 'order')}
+                    />
+                  </div>
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <div className="flex flex-col">
+                    <span>Total</span>
+                    <input
+                      type="text"
+                      placeholder="Filter total..."
+                      className="mt-1 px-2 py-1 text-sm border rounded focus:outline-none focus:ring-1 focus:ring-green-500"
+                      onChange={(e) => handleColumnFilter('total', e.target.value, 'order')}
+                    />
+                  </div>
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <div className="flex flex-col">
+                    <span>Status</span>
+                    <input
+                      type="text"
+                      placeholder="Filter status..."
+                      className="mt-1 px-2 py-1 text-sm border rounded focus:outline-none focus:ring-1 focus:ring-green-500"
+                      onChange={(e) => handleColumnFilter('status', e.target.value, 'order')}
+                    />
+                  </div>
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <div className="flex flex-col">
+                    <span>Date</span>
+                    <input
+                      type="text"
+                      placeholder="Filter date..."
+                      className="mt-1 px-2 py-1 text-sm border rounded focus:outline-none focus:ring-1 focus:ring-green-500"
+                      onChange={(e) => handleColumnFilter('date', e.target.value, 'order')}
+                    />
+                  </div>
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {orders.map((order) => (
+              {filteredOrders.map((order) => (
                 <tr key={order.id}>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-900">{order.id}</div>

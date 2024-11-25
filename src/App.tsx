@@ -12,6 +12,8 @@ import ProfilePage from './pages/ProfilePage';
 import SellerDashboard from './pages/seller/Dashboard';
 import BuyerOrders from './pages/buyer/Orders';
 import ProductListingPage from './pages/ProductListingPage';
+import Insights from './pages/seller/Insights';
+import AdvancedInsights from './pages/seller/AdvancedInsights';
 import { AuthProvider } from './context/AuthContext';
 
 function HomePage() {
@@ -38,8 +40,14 @@ function App() {
             <Route path="/auth/:userType/login" element={<LoginPage />} />
             <Route path="/auth/:userType/signup" element={<SignupPage />} />
             <Route path="/profile" element={<ProfilePage />} />
-            <Route path="/seller/dashboard" element={<SellerDashboard />} />
             <Route path="/buyer/orders" element={<BuyerOrders />} />
+            {/* Seller Routes */}
+            <Route path="/seller">
+              <Route index element={<SellerDashboard />} />
+              <Route path="dashboard" element={<SellerDashboard />} />
+              <Route path="insights" element={<Insights />} />
+              <Route path="advanced-insights" element={<AdvancedInsights />} />
+            </Route>
           </Routes>
         </div>
       </Router>
